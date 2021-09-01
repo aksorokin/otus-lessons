@@ -23,7 +23,7 @@ public class Homework1Application implements CommandLineRunner {
     public void run(String... args) throws Exception {
         logger.debug("Creating database tables");
         jdbcTemplate.execute("CREATE SEQUENCE education.users_seq");
-        jdbcTemplate.execute("CREATE TABLE IF NOT EXISTS education.users (\n" +
+        jdbcTemplate.execute("CREATE TABLE IF NOT EXISTS d3c6gmvm8i49do.users (\n" +
                 "                  id bigint check (id > 0) NOT NULL DEFAULT NEXTVAL ('education.users_seq'),\n" +
                 "                  username varchar(100) NOT NULL,\n" +
                 "                  password varchar(100) NOT NULL,\n" +
@@ -38,7 +38,7 @@ public class Homework1Application implements CommandLineRunner {
                 "                )   \n" +
                 "\n" +
                 "alter sequence education.users_seq restart with 7;");
-        jdbcTemplate.execute("CREATE TABLE IF NOT EXISTS education.user_friends (\n" +
+        jdbcTemplate.execute("CREATE TABLE IF NOT EXISTS d3c6gmvm8i49do.user_friends (\n" +
                 "                   user_id bigint NOT NULL,\n" +
                 "                   friend_id bigint NOT NULL,\n" +
                 "                   PRIMARY KEY (friend_id,user_id)\n" +
