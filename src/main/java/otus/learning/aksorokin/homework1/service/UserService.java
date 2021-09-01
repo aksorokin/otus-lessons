@@ -23,7 +23,8 @@ public class UserService {
 
     public User findUserByUserName(String username) {
         List<User> users = jdbcTemplate.query(
-                "SELECT id, username, lastname, age, gender, interests, city, password, enabled  FROM education.users where username = ?",
+//                "SELECT id, username, lastname, age, gender, interests, city, password, enabled  FROM education.users where username = ?",
+                "SELECT id, username, lastname, age, gender, interests, city, password, enabled  FROM d3c6gmvm8i49do.users where username = ?",
                 new Object[]{username},
                 (rs, rowNum) -> new User(
                         rs.getLong("id"),
@@ -41,7 +42,8 @@ public class UserService {
     }
     public List<User> findAllUsers() {
         List<User> users = jdbcTemplate.query(
-                "SELECT id, username, lastname, age, gender, interests, city, password, enabled  FROM education.users",
+                "SELECT id, username, lastname, age, gender, interests, city, password, enabled  FROM d3c6gmvm8i49do.users",
+//                "SELECT id, username, lastname, age, gender, interests, city, password, enabled  FROM education.users",
                 (rs, rowNum) -> new User(
                         rs.getLong("id"),
                         rs.getString("username"),
@@ -61,7 +63,8 @@ public class UserService {
         user.setPassword(bCryptPasswordEncoder.encode(user.getPassword()));
         user.setEnabled(true);
         int result = jdbcTemplate.update(
-                "INSERT INTO education.users (username, lastname, age, gender, interests, city, password, enabled) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                "INSERT INTO d3c6gmvm8i49do.users (username, lastname, age, gender, interests, city, password, enabled) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+//                "INSERT INTO education.users (username, lastname, age, gender, interests, city, password, enabled) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
                 user.getUsername(),
                 user.getLastName(),
                 user.getAge(),
@@ -75,7 +78,8 @@ public class UserService {
     }
     public int addFriendById(long userId, long friendId){
         int result = jdbcTemplate.update(
-                "INSERT INTO education.user_friends (user_id, friend_id) VALUES (?, ?)",
+                "INSERT INTO d3c6gmvm8i49do.user_friends (user_id, friend_id) VALUES (?, ?)",
+//                "INSERT INTO education.user_friends (user_id, friend_id) VALUES (?, ?)",
                 userId,
                 friendId
         );
@@ -105,7 +109,8 @@ public class UserService {
 
     public int deleteFriendById(long userId, long friendId) {
         int result = jdbcTemplate.update(
-                "DELETE FROM education.user_friends WHERE user_id=? and friend_id=? ",
+                "DELETE FROM d3c6gmvm8i49do.user_friends WHERE user_id=? and friend_id=? ",
+//                "DELETE FROM education.user_friends WHERE user_id=? and friend_id=? ",
                 userId,
                 friendId
         );

@@ -1,4 +1,5 @@
-CREATE TABLE IF NOT EXISTS 'education'.'users' (
+# MySQL
+CREATE TABLE IF NOT EXISTS education.users (
   id bigint unsigned NOT NULL AUTO_INCREMENT,
   username varchar(100) NOT NULL,
   password varchar(100) NOT NULL,
@@ -9,7 +10,7 @@ CREATE TABLE IF NOT EXISTS 'education'.'users' (
   city varchar(50) NOT NULL,
   gender tinyint(1) NOT NULL,
   PRIMARY KEY (id),
-  UNIQUE KEY `username_unique` (username)
+  UNIQUE KEY username_unique (username)
 ) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 CREATE TABLE IF NOT EXISTS education.user_friends (
