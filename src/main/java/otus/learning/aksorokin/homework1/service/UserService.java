@@ -2,6 +2,7 @@ package otus.learning.aksorokin.homework1.service;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -12,7 +13,8 @@ import java.util.List;
 @Service
 public class UserService {
     private static final Logger logger = LoggerFactory.getLogger(UserService.class);
-
+    @Value("${db.schema}")
+    private String dbSchema;
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
     private final JdbcTemplate jdbcTemplate;
 
@@ -24,7 +26,7 @@ public class UserService {
     public User findUserByUserName(String username) {
         List<User> users = jdbcTemplate.query(
 //                "SELECT id, username, lastname, age, gender, interests, city, password, enabled  FROM education.users where username = ?",
-                "SELECT id, username, lastname, age, gender, interests, city, password, enabled  FROM users where username = ?",
+                "SELECT id, username, lastname, age, gender, interests, city, password, enabled  FROM "+dbSchema+"users where username = ?",
                 new Object[]{username},
                 (rs, rowNum) -> new User(
                         rs.getLong("id"),
@@ -42,7 +44,7 @@ public class UserService {
     }
     public List<User> findAllUsers() {
         List<User> users = jdbcTemplate.query(
-                "SELECT id, username, lastname, age, gender, interests, city, password, enabled  FROM users",
+                "SELECT id, username, lastname, age, gender, interests, city, password, enabled  FROM "+dbSchema+"users",
 //                "SELECT id, username, lastname, age, gender, interests, city, password, enabled  FROM education.users",
                 (rs, rowNum) -> new User(
                         rs.getLong("id"),
@@ -63,7 +65,7 @@ public class UserService {
         user.setPassword(bCryptPasswordEncoder.encode(user.getPassword()));
         user.setEnabled(true);
         int result = jdbcTemplate.update(
-                "INSERT INTO users (username, lastname, age, gender, interests, city, password, enabled) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                "INSERT INTO "+dbSchema+"users (username, lastname, age, gender, interests, city, password, enabled) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
 //                "INSERT INTO education.users (username, lastname, age, gender, interests, city, password, enabled) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
                 user.getUsername(),
                 user.getLastName(),
@@ -78,7 +80,7 @@ public class UserService {
     }
     public int addFriendById(long userId, long friendId){
         int result = jdbcTemplate.update(
-                "INSERT INTO user_friends (user_id, friend_id) VALUES (?, ?)",
+                "INSERT INTO "+dbSchema+"user_friends (user_id, friend_id) VALUES (?, ?)",
 //                "INSERT INTO education.user_friends (user_id, friend_id) VALUES (?, ?)",
                 userId,
                 friendId
@@ -88,9 +90,9 @@ public class UserService {
 
     public List<User> findUserFriends(long userId) {
         List<User> users = jdbcTemplate.query(
-                "select id, username, lastname, age, gender, interests, city, password, enabled from users inner join user_friends\n" +
-                        "                       on user_friends.friend_id=users.id\n" +
-                        "where user_friends.user_id=?\n",
+                "select id, username, lastname, age, gender, interests, city, password, enabled from "+dbSchema+"users inner join "+dbSchema+"user_friends\n" +
+                        "                       on "+dbSchema+"user_friends.friend_id="+dbSchema+"users.id\n" +
+                        "where "+dbSchema+"user_friends.user_id=?\n",
                 new Object[]{userId},
                 (rs, rowNum) -> new User(
                         rs.getLong("id"),
@@ -109,7 +111,7 @@ public class UserService {
 
     public int deleteFriendById(long userId, long friendId) {
         int result = jdbcTemplate.update(
-                "DELETE FROM user_friends WHERE user_id=? and friend_id=? ",
+                "DELETE FROM "+dbSchema+"user_friends WHERE user_id=? and friend_id=? ",
 //                "DELETE FROM education.user_friends WHERE user_id=? and friend_id=? ",
                 userId,
                 friendId

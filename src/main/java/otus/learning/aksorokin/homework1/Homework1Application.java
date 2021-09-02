@@ -3,6 +3,7 @@ package otus.learning.aksorokin.homework1;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -17,32 +18,31 @@ public class Homework1Application implements CommandLineRunner {
     }
 
     @Autowired
-    JdbcTemplate jdbcTemplate;
+    private JdbcTemplate jdbcTemplate;
+    @Value("${db.schema}")
+    private String dbSchema;
+
 
     @Override
     public void run(String... args) throws Exception {
         logger.debug("Creating database tables");
-        jdbcTemplate.execute("CREATE SEQUENCE users_seq");
-        jdbcTemplate.execute("CREATE TABLE IF NOT EXISTS users (\n" +
-                "                  id bigint check (id > 0) NOT NULL DEFAULT NEXTVAL ('users_seq'),\n" +
-                "                  username varchar(100) NOT NULL,\n" +
-                "                  password varchar(100) NOT NULL,\n" +
-                "                  enabled smallint NOT NULL,\n" +
-                "                  lastname varchar(100) NOT NULL,\n" +
-                "                  age int NOT NULL,\n" +
-                "                  interests varchar(1000) DEFAULT NULL,\n" +
-                "                  city varchar(50) NOT NULL,\n" +
-                "                  gender smallint NOT NULL,\n" +
-                "                  PRIMARY KEY (id),\n" +
-                "                  CONSTRAINT username_unique UNIQUE (username)\n" +
-                "                )   \n" +
-                "\n" +
-                "alter sequence d3c6gmvm8i49do.users_seq restart with 7;");
-        jdbcTemplate.execute("CREATE TABLE IF NOT EXISTS user_friends (\n" +
-                "                   user_id bigint NOT NULL,\n" +
-                "                   friend_id bigint NOT NULL,\n" +
-                "                   PRIMARY KEY (friend_id,user_id)\n" +
-                "                )");
+        jdbcTemplate.execute("CREATE TABLE IF NOT EXISTS "+dbSchema+"users (\n" +
+                "\tid int8 NOT NULL GENERATED ALWAYS AS IDENTITY,\n" +
+                "\tusername varchar(100) NOT NULL,\n" +
+                "\t\"password\" varchar(100) NOT NULL,\n" +
+                "\tenabled bool NOT NULL,\n" +
+                "\tlastname varchar(100) NOT NULL,\n" +
+                "\tage int4 NOT NULL,\n" +
+                "\tinterests varchar(1000) NULL,\n" +
+                "\tcity varchar(50) NOT NULL,\n" +
+                "\tgender int2 NOT NULL,\n" +
+                "\tCONSTRAINT users_pk PRIMARY KEY (id)\n" +
+                ")");
+        jdbcTemplate.execute("CREATE TABLE IF NOT EXISTS "+dbSchema+"user_friends (\n" +
+                "\tuser_id int8 NOT NULL,\n" +
+                "\tfriend_id int8 NOT NULL,\n" +
+                "\tCONSTRAINT user_friends_pk PRIMARY KEY (user_id, friend_id)\n" +
+                ")");
   /*      jdbcTemplate.execute("CREATE TABLE IF NOT EXISTS education.users (\n" +
                 "  id bigint unsigned NOT NULL AUTO_INCREMENT,\n" +
                 "  username varchar(100) NOT NULL,\n" +
