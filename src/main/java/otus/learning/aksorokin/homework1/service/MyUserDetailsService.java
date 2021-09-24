@@ -1,5 +1,6 @@
 package otus.learning.aksorokin.homework1.service;
 
+import lombok.SneakyThrows;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -19,6 +20,7 @@ public class MyUserDetailsService implements UserDetailsService {
         this.userService = userService;
     }
 
+    @SneakyThrows
     @Override
     @Transactional
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {

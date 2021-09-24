@@ -15,6 +15,7 @@ import java.io.Serializable;
 public class User implements Serializable {
     private long userId;
     private String username;
+    private String firstName;
     private String lastName;
     private int age;
     private int gender;

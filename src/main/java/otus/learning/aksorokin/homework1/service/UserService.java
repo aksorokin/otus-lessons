@@ -1,121 +1,132 @@
 package otus.learning.aksorokin.homework1.service;
 
+import org.apache.ibatis.session.ExecutorType;
+import org.apache.ibatis.session.SqlSession;
+import org.mybatis.spring.SqlSessionTemplate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import otus.learning.aksorokin.homework1.mappers.UserMapper;
 import otus.learning.aksorokin.homework1.model.User;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
 public class UserService {
     private static final Logger logger = LoggerFactory.getLogger(UserService.class);
-    @Value("${db.schema}")
-    private String dbSchema;
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
-    private final JdbcTemplate jdbcTemplate;
+    private final SqlSessionTemplate sqlSessionTemplate;
 
-    public UserService(BCryptPasswordEncoder bCryptPasswordEncoder, JdbcTemplate jdbcTemplate) {
+    public UserService(BCryptPasswordEncoder bCryptPasswordEncoder, SqlSessionTemplate sqlSessionTemplate) {
         this.bCryptPasswordEncoder = bCryptPasswordEncoder;
-        this.jdbcTemplate = jdbcTemplate;
+        this.sqlSessionTemplate = sqlSessionTemplate;
     }
 
-    public User findUserByUserName(String username) {
-        List<User> users = jdbcTemplate.query(
-//                "SELECT id, username, lastname, age, gender, interests, city, password, enabled  FROM education.users where username = ?",
-                "SELECT id, username, lastname, age, gender, interests, city, password, enabled  FROM "+dbSchema+"users where username = ?",
-                new Object[]{username},
-                (rs, rowNum) -> new User(
-                        rs.getLong("id"),
-                        rs.getString("username"),
-                        rs.getString("lastname"),
-                        rs.getInt("age"),
-                        rs.getInt("gender"),
-                        rs.getString("interests"),
-                        rs.getString("city"),
-                        rs.getString("password"),
-                        rs.getBoolean("enabled")
-                ));
-//        ).forEach(customer -> log.info(customer.toString()));
-        return users.isEmpty()  ? null: users.get(0);
+    public User findUserByUserName(String username) throws Exception {
+        User user = null;
+        try (SqlSession sqlSession = sqlSessionTemplate.getSqlSessionFactory().openSession()) {
+            UserMapper userMapper = sqlSession.getMapper(UserMapper.class);
+            user = userMapper.findUserByUserName(username);
+
+        }
+
+        return user;
     }
-    public List<User> findAllUsers() {
-        List<User> users = jdbcTemplate.query(
-                "SELECT id, username, lastname, age, gender, interests, city, password, enabled  FROM "+dbSchema+"users",
-//                "SELECT id, username, lastname, age, gender, interests, city, password, enabled  FROM education.users",
-                (rs, rowNum) -> new User(
-                        rs.getLong("id"),
-                        rs.getString("username"),
-                        rs.getString("lastname"),
-                        rs.getInt("age"),
-                        rs.getInt("gender"),
-                        rs.getString("interests"),
-                        rs.getString("city"),
-                        rs.getString("password"),
-                        rs.getBoolean("enabled")
-                ));
-//        ).forEach(customer -> log.info(customer.toString()));
+
+    public List<User> findAllUsers() throws Exception {
+        List<User> users = null;
+        try (SqlSession sqlSession = sqlSessionTemplate.getSqlSessionFactory().openSession()) {
+            UserMapper userMapper = sqlSession.getMapper(UserMapper.class);
+            users = userMapper.findAllUsers();
+
+        }
         return users;
     }
 
-    public int saveUser(User user) {
+    public int saveUser(User user) throws Exception{
         user.setPassword(bCryptPasswordEncoder.encode(user.getPassword()));
         user.setEnabled(true);
-        int result = jdbcTemplate.update(
-                "INSERT INTO "+dbSchema+"users (username, lastname, age, gender, interests, city, password, enabled) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-//                "INSERT INTO education.users (username, lastname, age, gender, interests, city, password, enabled) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-                user.getUsername(),
-                user.getLastName(),
-                user.getAge(),
-                user.getGender(),
-                user.getInterests(),
-                user.getCity(),
-                user.getPassword(),
-                user.isEnabled()
-        );
+        int result = 0;
+        try (SqlSession sqlSession = sqlSessionTemplate.getSqlSessionFactory().openSession()) {
+            UserMapper userMapper = sqlSession.getMapper(UserMapper.class);
+            result = userMapper.saveUser(user);
+
+        }
         return result;
     }
-    public int addFriendById(long userId, long friendId){
-        int result = jdbcTemplate.update(
-                "INSERT INTO "+dbSchema+"user_friends (user_id, friend_id) VALUES (?, ?)",
-//                "INSERT INTO education.user_friends (user_id, friend_id) VALUES (?, ?)",
-                userId,
-                friendId
-        );
+    @Transactional
+    public int saveUserTestData(List<User> users, int batchSize){
+        logger.info("generated data");
+        int result = 0;
+        int i = 0;
+        long startList = System.currentTimeMillis();
+        try (SqlSession sqlSession = sqlSessionTemplate.getSqlSessionFactory().openSession(ExecutorType.BATCH, false)) {
+            UserMapper userMapper = sqlSession.getMapper(UserMapper.class);
+            for(User user: users) {
+                user.setPassword(bCryptPasswordEncoder.encode(user.getPassword()));
+                user.setEnabled(true);
+                try {
+                    result = userMapper.saveUser(user);
+                }catch (DuplicateKeyException e) {
+                        logger.warn("saveUserTestData insert DuplicateKeyException insert ignore: " + e);
+                        continue;
+                    }
+//                logger.info("result insert"+result+"insert user: "+user);
+          /*      i++;
+                if (i % 100000 == 0 || i == 100000  - 1) {
+//                if (i % batchSize == 0 || i == batchSize - 1) {
+                    sqlSession.flushStatements();
+                    sqlSession.commit();
+                    sqlSession.clearCache();
+                    i=0;
+                }
+*/
+            }
+            sqlSession.flushStatements();
+            sqlSession.commit();
+            long stopList = System.currentTimeMillis()-startList;
+            logger.info("The time spent was:"+stopList/1000+" second");
+        } catch (Throwable e) {
+            e.printStackTrace();
+        }
+        return result;
+    }
+    public int addFriendById(long userId, long friendId) throws Exception {
+        int result;
+        try (SqlSession sqlSession = sqlSessionTemplate.getSqlSessionFactory().openSession();) {
+            UserMapper userMapper = sqlSession.getMapper(UserMapper.class);
+            result = userMapper.addFriendById(userId,friendId);
+
+        }
         return result;
     }
 
     public List<User> findUserFriends(long userId) {
-        List<User> users = jdbcTemplate.query(
-                "select id, username, lastname, age, gender, interests, city, password, enabled from "+dbSchema+"users inner join "+dbSchema+"user_friends\n" +
-                        "                       on "+dbSchema+"user_friends.friend_id="+dbSchema+"users.id\n" +
-                        "where "+dbSchema+"user_friends.user_id=?\n",
-                new Object[]{userId},
-                (rs, rowNum) -> new User(
-                        rs.getLong("id"),
-                        rs.getString("username"),
-                        rs.getString("lastname"),
-                        rs.getInt("age"),
-                        rs.getInt("gender"),
-                        rs.getString("interests"),
-                        rs.getString("city"),
-                        rs.getString("password"),
-                        rs.getBoolean("enabled")
-                ));
-//        ).forEach(customer -> log.info(customer.toString()));
+        List<User> users = null;
+        try (SqlSession sqlSession = sqlSessionTemplate.getSqlSessionFactory().openSession()) {
+            UserMapper userMapper = sqlSession.getMapper(UserMapper.class);
+            users = userMapper.findUserFriends(userId);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         return users;
     }
 
-    public int deleteFriendById(long userId, long friendId) {
-        int result = jdbcTemplate.update(
-                "DELETE FROM "+dbSchema+"user_friends WHERE user_id=? and friend_id=? ",
-//                "DELETE FROM education.user_friends WHERE user_id=? and friend_id=? ",
-                userId,
-                friendId
-        );
+    public int deleteFriendById(long userId, long friendId) throws Exception {
+        int result = 0;
+        try (SqlSession sqlSession = sqlSessionTemplate.getSqlSessionFactory().openSession()) {
+            UserMapper userMapper = sqlSession.getMapper(UserMapper.class);
+            result = userMapper.deleteFriendById(userId,friendId);
+
+        }
         return result;
     }
 }
